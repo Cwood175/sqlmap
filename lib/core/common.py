@@ -216,24 +216,24 @@ class UnicodeRawConfigParser(_configparser.RawConfigParser):
         """
 
         if self._defaults:
-            fp.write("[%s]\n" % _configparser.DEFAULTSECT)
+            fp.write(("[%s]\n" % _configparser.DEFAULTSECT).encode(UNICODE_ENCODING))
 
             for (key, value) in self._defaults.items():
-                fp.write("%s = %s" % (key, getUnicode(value, UNICODE_ENCODING)))
+                fp.write(("%s = %s" % (key, getUnicode(value, UNICODE_ENCODING))).encode(UNICODE_ENCODING))
 
-            fp.write("\n")
+            fp.write("\n".encode(UNICODE_ENCODING))
 
         for section in self._sections:
-            fp.write("[%s]\n" % section)
+            fp.write(("[%s]\n" % section).encode(UNICODE_ENCODING))
 
             for (key, value) in self._sections[section].items():
                 if key != "__name__":
                     if value is None:
-                        fp.write("%s\n" % (key))
+                        fp.write(("%s\n" % (key)).encode(UNICODE_ENCODING))
                     elif not isListLike(value):
-                        fp.write("%s = %s\n" % (key, getUnicode(value, UNICODE_ENCODING)))
+                        fp.write(("%s = %s\n" % (key, getUnicode(value, UNICODE_ENCODING))).encode(UNICODE_ENCODING))
 
-            fp.write("\n")
+            fp.write("\n".encode(UNICODE_ENCODING))
 
 class Format(object):
     @staticmethod
@@ -1529,7 +1529,7 @@ def setPaths(rootPath):
     paths.SQL_KEYWORDS = os.path.join(paths.SQLMAP_TXT_PATH, "keywords.txt")
     paths.SMALL_DICT = os.path.join(paths.SQLMAP_TXT_PATH, "smalldict.txt")
     paths.USER_AGENTS = os.path.join(paths.SQLMAP_TXT_PATH, "user-agents.txt")
-    paths.WORDLIST = os.path.join(paths.SQLMAP_TXT_PATH, "wordlist.tx_")
+    paths.WORDLIST = os.path.join(paths.SQLMAP_TXT_PATH, "wordlist.txt")
     paths.ERRORS_XML = os.path.join(paths.SQLMAP_XML_PATH, "errors.xml")
     paths.BOUNDARIES_XML = os.path.join(paths.SQLMAP_XML_PATH, "boundaries.xml")
     paths.QUERIES_XML = os.path.join(paths.SQLMAP_XML_PATH, "queries.xml")
@@ -5608,7 +5608,7 @@ def checkSums():
                 with open(filepath, "rb") as f:
                     content = f.read()
                 if not hashlib.sha256(content).hexdigest() == expected:
-                    retVal &= False
+                    retVal = False
                     break
 
     return retVal
