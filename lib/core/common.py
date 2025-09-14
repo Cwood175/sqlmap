@@ -1541,7 +1541,10 @@ def setPaths(rootPath):
 
     for path in paths.values():
         if any(path.endswith(_) for _ in (".txt", ".xml", ".tx_")):
-            checkFile(path)
+            try:
+                checkFile(path)
+            except Exception:
+                pass
 
     if IS_WIN:
         # Reference: https://pureinfotech.com/list-environment-variables-windows-10/
@@ -2034,7 +2037,7 @@ def getFileType(filePath):
         content = openFile(filePath, "rb", encoding=None).read()
 
         try:
-            content.decode()
+            content.decode("utf-8")
         except:
             pass
         else:
@@ -2338,7 +2341,7 @@ def isHexEncodedString(subject):
     False
     """
 
-    return re.match(r"\A[0-9a-fA-Fx]+\Z", subject) is not None
+    return re.match(r"\A[0-9a-fA-F]+\Z", subject) is not None
 
 @cachedmethod
 def getConsoleWidth(default=80):
@@ -3450,13 +3453,13 @@ def parseSqliteTableSchema(value):
 
         value = re.sub(r"\(.+?\)", "", value).strip()
 
-        for match in re.finditer(r"(?:\A|,)\s*(([\"'`]).+?\2|\w+)(?:\s+(INT|INTEGER|TINYINT|SMALLINT|MEDIUMINT|BIGINT|UNSIGNED BIG INT|INT2|INT8|INTEGER|CHARACTER|VARCHAR|VARYING CHARACTER|NCHAR|NATIVE CHARACTER|NVARCHAR|TEXT|CLOB|LONGTEXT|BLOB|NONE|REAL|DOUBLE|DOUBLE PRECISION|FLOAT|REAL|NUMERIC|DECIMAL|BOOLEAN|DATE|DATETIME|NUMERIC)\b)?", decodeStringEscape(value), re.I):
+        for match in re.finditer(r"(?:\A|,)\s*(([\"'`]).+?\2|\w+)(?:\s+(INT|INTEGER|TINYINT|SMALLINT|MEDIUMINT|BIGINT|INT2|INT8|CHARACTER|VARCHAR|VARYING CHARACTER|NCHAR|NATIVE CHARACTER|NVARCHAR|TEXT|CLOB|LONGTEXT|BLOB|NONE|REAL|DOUBLE|DOUBLE PRECISION|FLOAT|NUMERIC|DECIMAL|BOOLEAN|DATE|DATETIME)\b)?", decodeStringEscape(value), re.I):
             column = match.group(1).strip(match.group(2) or "")
             if re.search(r"(?i)\A(CONSTRAINT|PRIMARY|UNIQUE|CHECK|FOREIGN)\b", column.strip()):
                 continue
             retVal = True
 
-            columns[column] = match.group(3) or "TEXT"
+            columns[column] = match.group(3) if match.group(3) else "TEXT"
 
         table[safeSQLIdentificatorNaming(conf.tbl, True)] = columns
         kb.data.cachedColumns[conf.db] = table
@@ -3939,6 +3942,7 @@ def fetchRandomAgent():
         debugMsg += "file '%s'" % paths.USER_AGENTS
         logger.debug(debugMsg)
 
+
         try:
             kb.userAgents = getFileItems(paths.USER_AGENTS)
         except IOError:
@@ -3946,7 +3950,7 @@ def fetchRandomAgent():
             errMsg += "file '%s'" % paths.USER_AGENTS
             raise SqlmapSystemException(errMsg)
 
-    return random.sample(kb.userAgents, 1)[0]
+    return random.choice(kb.userAgents)
 
 def createGithubIssue(errMsg, excMsg):
     """
@@ -5598,17 +5602,20 @@ def checkSums():
     retVal = True
 
     if paths.get("DIGEST_FILE"):
-        for entry in getFileItems(paths.DIGEST_FILE):
-            match = re.search(r"([0-9a-f]+)\s+([^\s]+)", entry)
-            if match:
-                expected, filename = match.groups()
-                filepath = os.path.join(paths.SQLMAP_ROOT_PATH, filename).replace('/', os.path.sep)
-                if not checkFile(filepath, False):
-                    continue
-                with open(filepath, "rb") as f:
-                    content = f.read()
-                if not hashlib.sha256(content).hexdigest() == expected:
-                    retVal &= False
-                    break
+        try:
+            for entry in getFileItems(paths.DIGEST_FILE):
+                match = re.search(r"([0-9a-f]+)\s+([^\s]+)", entry)
+                if match:
+                    expected, filename = match.groups()
+                    filepath = os.path.join(paths.SQLMAP_ROOT_PATH, filename).replace('/', os.path.sep)
+                    if not checkFile(filepath, False):
+                        continue
+                    with open(filepath, "rb") as f:
+                        content = f.read()
+                    if not hashlib.sha256(content).hexdigest() == expected:
+                        retVal &= False
+                        break
+        except Exception:
+            retVal = False
 
     return retVal

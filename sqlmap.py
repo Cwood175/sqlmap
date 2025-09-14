@@ -155,8 +155,12 @@ def main():
         cmdLineOptions.update(args.__dict__ if hasattr(args, "__dict__") else args)
         initOptions(cmdLineOptions)
 
-        if checkPipedInput():
-            conf.batch = True
+        try:
+            if checkPipedInput():
+                conf.batch = True
+        except Exception as ex:
+            errMsg = "Error occurred during checkPipedInput: %s" % getSafeExString(ex)
+            logger.error(errMsg)
 
         if conf.get("api"):
             # heavy imports
@@ -193,7 +197,12 @@ def main():
                 else:
                     try:
                         if conf.crawlDepth and conf.bulkFile:
-                            targets = getFileItems(conf.bulkFile)
+                            try:
+                                targets = getFileItems(conf.bulkFile)
+                            except Exception as ex:
+                                errMsg = "Error reading bulk file: %s" % getSafeExString(ex)
+                                logger.error(errMsg)
+                                raise
 
                             for i in xrange(len(targets)):
                                 target = None
@@ -208,18 +217,27 @@ def main():
                                     infoMsg = "starting crawler for target URL '%s' (%d/%d)" % (target, i + 1, len(targets))
                                     logger.info(infoMsg)
 
-                                    crawl(target)
-                                except Exception as ex:
-                                    if target and not isinstance(ex, SqlmapUserQuitException):
-                                        errMsg = "problem occurred while crawling '%s' ('%s')" % (target, getSafeExString(ex))
-                                        logger.error(errMsg)
-                                    else:
+                                    try:
+                                        crawl(target)
+                                    except Exception as ex:
+                                        if target and not isinstance(ex, SqlmapUserQuitException):
+                                            errMsg = "problem occurred while crawling '%s' ('%s')" % (target, getSafeExString(ex))
+                                            logger.error(errMsg)
+                                        else:
                                         raise
                                 else:
-                                    if kb.targets:
-                                        start()
+                                    try:
+                                        if kb.targets:
+                                            start()
+                                    except Exception as ex:
+                                        errMsg = "Error starting scan: %s" % getSafeExString(ex)
+                                        logger.error(errMsg)
                         else:
-                            start()
+                            try:
+                                start()
+                            except Exception as ex:
+                                errMsg = "Error starting scan: %s" % getSafeExString(ex)
+                                logger.error(errMsg)
                     except Exception as ex:
                         os._exitcode = 1
 
@@ -268,7 +286,10 @@ def main():
         print()
         errMsg = unhandledExceptionMessage()
         excMsg = traceback.format_exc()
-        valid = checkSums()
+        try:
+            valid = checkSums()
+        except Exception:
+            valid = False
 
         os._exitcode = 255
 
@@ -575,6 +596,7 @@ def main():
                     except OSError:
                         pass
 
+            from lib.core.common import filterNone
             if any((conf.vulnTest, conf.smokeTest)) or not filterNone(filepath for filepath in glob.glob(os.path.join(tempDir, '*')) if not any(filepath.endswith(_) for _ in (".lock", ".exe", ".so", '_'))):  # ignore junk files
                 try:
                     shutil.rmtree(tempDir, ignore_errors=True)
