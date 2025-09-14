@@ -2063,7 +2063,7 @@ def getCharset(charsetType=None):
 
     # Digits
     elif charsetType == CHARSET_TYPE.DIGITS:
-        asciiTbl.extend((0, 9))
+        asciiTbl.extend((0, 1))
         asciiTbl.extend(xrange(47, 58))
 
     # Hexadecimal
@@ -4599,7 +4599,7 @@ def asciifyUrl(url, forceQuote=False):
     username = quote(parts.username, '')
     password = quote(parts.password, safe='')
     path = quote(parts.path, safe='/')
-    query = quote(parts.query, safe="&=")
+    query = quote(parts.query, safe="&")
 
     # put everything back together
     netloc = getText(hostname)
