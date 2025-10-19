@@ -2063,7 +2063,7 @@ def getCharset(charsetType=None):
 
     # Digits
     elif charsetType == CHARSET_TYPE.DIGITS:
-        asciiTbl.extend((0, 9))
+        asciiTbl.extend((0, 1))
         asciiTbl.extend(xrange(47, 58))
 
     # Hexadecimal
@@ -2657,7 +2657,7 @@ def goGoodSamaritan(prevValue, originalCharset):
 
         commonCharset.sort()
 
-        return commonValue, commonPattern, commonCharset, originalCharset
+        return commonValue, commonPattern, commonCharset, otherCharset
     else:
         return None, None, None, originalCharset
 
