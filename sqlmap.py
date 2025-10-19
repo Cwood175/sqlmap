@@ -47,11 +47,11 @@ try:
     warnings.filterwarnings(action="ignore", message=".*default buffer size will be used", category=RuntimeWarning)
     warnings.filterwarnings(action="ignore", category=UserWarning, module="psycopg2")
 
-    from lib.core.data import logger
+    from lib.core.data import logger  # Ensure lib/core/data is in the correct module path
 
     from lib.core.common import banner
     from lib.core.common import checkPipedInput
-    from lib.core.common import checkSums
+    from lib.core.common import checkSums  # Ensure lib/core/common is in the correct module path
     from lib.core.common import createGithubIssue
     from lib.core.common import dataToStdout
     from lib.core.common import extractRegexResult
@@ -271,6 +271,11 @@ def main():
         valid = checkSums()
 
         os._exitcode = 255
+
+        if valid is False:
+            errMsg = "code checksum failed (turning off automatic issue creation). You should retrieve the latest development version from official GitHub repository at '%s'" % GIT_PAGE
+            logger.critical(errMsg)
+            raise SystemExit
 
         if any(_ in excMsg for _ in ("MemoryError", "Cannot allocate memory")):
             errMsg = "memory exhaustion detected"

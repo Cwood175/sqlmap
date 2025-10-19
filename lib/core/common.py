@@ -1129,7 +1129,7 @@ def readInput(message, default=None, checkBatch=True, boolean=False):
 
     retVal = None
 
-    message = getUnicode(message)
+    message = getUnicode(message) if isinstance(message, six.string_types) else six.text_type(message)
 
     if "\n" in message:
         message += "%s> " % ("\n" if message.count("\n") > 1 else "")
@@ -1145,8 +1145,9 @@ def readInput(message, default=None, checkBatch=True, boolean=False):
             return conf.answers
 
         for item in conf.answers.split(','):
-            question = item.split('=')[0].strip()
-            answer = item.split('=')[1] if len(item.split('=')) > 1 else None
+            parts = item.split('='), 
+            question = parts[0].strip()
+            answer = parts[1] if len(parts) > 1 else None
             if answer and question.lower() in message.lower():
                 retVal = getUnicode(answer, UNICODE_ENCODING)
             elif answer is None and retVal:
@@ -5598,6 +5599,8 @@ def checkSums():
     retVal = True
 
     if paths.get("DIGEST_FILE"):
+        if not checkFile(paths.DIGEST_FILE):
+            return False
         for entry in getFileItems(paths.DIGEST_FILE):
             match = re.search(r"([0-9a-f]+)\s+([^\s]+)", entry)
             if match:
