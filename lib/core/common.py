@@ -1529,7 +1529,7 @@ def setPaths(rootPath):
     paths.SQL_KEYWORDS = os.path.join(paths.SQLMAP_TXT_PATH, "keywords.txt")
     paths.SMALL_DICT = os.path.join(paths.SQLMAP_TXT_PATH, "smalldict.txt")
     paths.USER_AGENTS = os.path.join(paths.SQLMAP_TXT_PATH, "user-agents.txt")
-    paths.WORDLIST = os.path.join(paths.SQLMAP_TXT_PATH, "wordlist.tx_")
+    paths.WORDLIST = os.path.join(paths.SQLMAP_TXT_PATH, "wordlist.txt")
     paths.ERRORS_XML = os.path.join(paths.SQLMAP_XML_PATH, "errors.xml")
     paths.BOUNDARIES_XML = os.path.join(paths.SQLMAP_XML_PATH, "boundaries.xml")
     paths.QUERIES_XML = os.path.join(paths.SQLMAP_XML_PATH, "queries.xml")
@@ -2232,6 +2232,13 @@ def getFilteredPageContent(page, onlyText=True, split=" "):
 
     retVal = page
 
+    # Convert bytes to text if necessary
+    if isinstance(page, bytes):
+        try:
+            page = page.decode('utf-8', errors='ignore')
+        except:
+            page = page.decode('latin-1', errors='ignore')
+
     # only if the page's charset has been successfully identified
     if isinstance(page, six.text_type):
         retVal = re.sub(r"(?si)<script.+?</script>|<!--.+?-->|<style.+?</style>%s" % (r"|<[^>]+>|\t|\n|\r" if onlyText else ""), split, page)
@@ -2338,7 +2345,7 @@ def isHexEncodedString(subject):
     False
     """
 
-    return re.match(r"\A[0-9a-fA-Fx]+\Z", subject) is not None
+    return re.match(r"\A[0-9a-fA-F]+\Z", subject) is not None
 
 @cachedmethod
 def getConsoleWidth(default=80):
@@ -5599,7 +5606,7 @@ def checkSums():
 
     if paths.get("DIGEST_FILE"):
         for entry in getFileItems(paths.DIGEST_FILE):
-            match = re.search(r"([0-9a-f]+)\s+([^\s]+)", entry)
+            match = re.search(r"([0-9a-f]+)\s+(.+)", entry)
             if match:
                 expected, filename = match.groups()
                 filepath = os.path.join(paths.SQLMAP_ROOT_PATH, filename).replace('/', os.path.sep)
