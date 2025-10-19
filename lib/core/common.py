@@ -2035,7 +2035,11 @@ def getFileType(filePath):
 
         try:
             content.decode()
-        except:
+        except UnicodeDecodeError:
+            pass
+        except Exception:
+            # Some files may raise other exceptions when decoding (e.g. on
+            # certain platforms), treat them as unknown binary-like content
             pass
         else:
             desc = "ascii"
@@ -2154,7 +2158,12 @@ def safeExpandUser(filepath):
     except UnicodeError:
         _ = locale.getdefaultlocale()
         encoding = _[1] if _ and len(_) > 1 else UNICODE_ENCODING
-        retVal = getUnicode(os.path.expanduser(filepath.encode(encoding)), encoding=encoding)
+        try:
+            retVal = getUnicode(os.path.expanduser(filepath.encode(encoding)), encoding=encoding)
+        except Exception:
+            # Fallback: avoid corrupting the path on platforms where the
+            # filesystem encoding does not round-trip properly
+            pass
 
     return retVal
 
